@@ -14,6 +14,7 @@ alerting:
 
 rule_files:
   - "alert.rules"
+  # "another_file_with_alerts"
 
 scrape_configs:
   - job_name: "local"
@@ -55,3 +56,22 @@ scrape_configs:
         target_label: instance
       - target_label: __address__
         replacement: blackbox:9115
+
+  - job_name: 'app'
+    metrics_path: /metrics
+    scrape_interval: 10s
+    static_configs:
+      - targets: ['app:80']
+    #  - targets: ['app:443']
+    # scheme: https
+    # tls_config:
+      # ca_file: /etc/ssl/certs/prometheus-ca.crt
+      # cert_file: /etc/ssl/certs/prometheus.crt
+      # /etc/prometheus/prometheus.key
+
+# Flask example app
+
+  - job_name: 'flask'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['flask-prometheus-example:8000'] 

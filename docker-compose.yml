@@ -1,8 +1,13 @@
 version: '3'
 
+#networks:
+#  monitor-net:
+#    driver: bridge
+
 networks:
-  monitor-net:
-    driver: bridge
+  default:
+    external:
+      name: monitor-net
 
 volumes:
     prometheus_data: {}
@@ -27,8 +32,8 @@ services:
       - 9090
     ports:
       - "9090:9090"
-    networks:
-      - monitor-net
+#    networks:
+#      - monitor-net
   
   nodeexporter:
     image: prom/node-exporter:latest
@@ -46,67 +51,78 @@ services:
     restart: unless-stopped
     expose:
       - 9100
-    networks:
-      - monitor-net
+#   networks:
+#      - monitor-net
   
   alertmanager:
-   image: prom/alertmanager
-   container_name: alertmanager
-   volumes: 
-     - ./alertmanager/:/etc/alertmanager/
-   command:
-     - '--config.file=/etc/alertmanager/config.yml'
-     - '--storage.path=/alertmanager'
-     - '--web.listen-address=0.0.0.0:9093'
-   restart: unless-stopped
-   ports:
-     - "9093:9093"
-   networks:
-     - monitor-net
+    image: prom/alertmanager
+    container_name: alertmanager
+    volumes: 
+      - ./alertmanager/:/etc/alertmanager/
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+      - '--web.listen-address=0.0.0.0:9093'
+    restart: unless-stopped
+    ports:
+      - "9093:9093"
+#    networks:
+#      - monitor-net
 
   blackbox-exporter:
-   image: prom/blackbox-exporter
-   container_name: blackbox
-   restart: unless-stopped
-   ports:
-     - "9115:9115"
-   networks:
-     - monitor-net
+    image: prom/blackbox-exporter
+    container_name: blackbox
+    restart: unless-stopped
+    ports:
+      - "9115:9115"
+#    networks:
+#      - monitor-net
 
   grafana:
-   image: grafana/grafana:latest
-   container_name: grafana
-   user: root
-   volumes:
-     - grafana_data:/var/lib/grafana
-     - ./grafana/datasources:/etc/grafana/datasources
-     - ./grafana/dashboards:/etc/grafana/dashboards
-     - ./grafana/setup.sh:/setup.sh
-   entrypoint: /setup.sh
-   environment:
-     - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
-     - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
-     - GF_USERS_ALLOW_SIGN_UP=false
-   restart: unless-stopped
-   expose:
-     - 3000
-   ports:
-     - 3000:3000
-   networks:
-     - monitor-net
+    image: grafana/grafana:latest
+    container_name: grafana
+    user: root
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./grafana/datasources:/etc/grafana/datasources
+      - ./grafana/dashboards:/etc/grafana/dashboards
+      - ./grafana/setup.sh:/setup.sh
+    entrypoint: /setup.sh
+    environment:
+      - GF_SECURITY_ADMIN_USER=${ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${ADMIN_PASSWORD:-admin}
+      - GF_USERS_ALLOW_SIGN_UP=false
+    restart: unless-stopped
+    expose:
+      - 3000
+    ports:
+      - 3000:3000
+#    networks:
+#      - monitor-net
   
   httpd:
     image: httpd
     ports:
-     - "5000:80"
+      - "5002:80"
     container_name: "httpd"
-    networks:
-     - monitor-net
+#    networks:
+#      - monitor-net
 
   nginx:
     image: nginx
     ports:
      - "5001:80"
     container_name: "nginx"
-    networks:
-     - monitor-net
+#    networks:
+#     - monitor-net
+
+  app:
+    build:
+      context: ./app
+    entrypoint: /app-entrypoint.sh
+    volumes:
+      - ./app:/app
+    ports:
+      - "80:80"
+#    networks:
+#      - monitor-net
